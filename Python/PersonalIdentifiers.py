@@ -46,22 +46,23 @@ def generalize_address(value):
     """Return only last two components: City, Country"""
     if pd.isna(value):
         return value
-    parts = value.split(",")
+    parts = value.split()
     if len(parts) >= 2:
-        return ",".join(parts[-2:]).strip()
+        return " ".join(parts[-1:]).strip()
     return value
 
 def suppress_address(value):
     """Remove house number / first components"""
     if pd.isna(value):
         return value
-    parts = value.split(",")
-    return ",".join(parts[1:]).strip() if len(parts) > 1 else value
+    parts = value.split()
+    return " ".join(parts[1:]).strip() if len(parts) > 1 else value
 
 def mask_phone(value):
     """Keep first 6 digits, mask rest"""
     if pd.isna(value):
         return value
+    value=str(value)
     return value[:6] + "XXXX"
 
 def token_phone(value):

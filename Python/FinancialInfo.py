@@ -14,34 +14,36 @@ def mask_card(value):
     """XXXX-XXXX-XXXX-last4"""
     if pd.isna(value):
         return value
-    value = value.replace("-", "")
-    return "XXXX-XXXX-XXXX-" + value[-4:]
+    digits = value.replace("-", "")
+    return "XXXX-XXXX-XXXX-" + digits[-4:]
 
 def token_card(value):
+    """Random credit/debit token"""
     return "TKN-CC-" + fake.bothify(text="??##")
 
 def mask_account(value):
     """XXXXXXlast4"""
     if pd.isna(value):
         return value
-    return "XXXXXX" + value[-4:]
+    return "XXXXXX" + str(value)[-4:]
 
 def token_account(value):
+    """ACC-TKN-####"""
     return "ACC-TKN-" + fake.bothify(text="####")
 
 def perturb_transaction(value):
-    """Add small noise e.g., ±50"""
+    """Add noise ±50"""
     if pd.isna(value):
         return value
     try:
-        value = float(value)
+        v = float(value)
         noise = random.uniform(-50, 50)
-        return round(value + noise, 2)
+        return round(v + noise, 2)
     except:
         return value
 
 def generalize_salary(value):
-    """₹857000 → 8–9L"""
+    """Ranges (Lakhs): 857000 → 8–9L"""
     if pd.isna(value):
         return value
     try:
@@ -62,26 +64,29 @@ def perturb_salary(value):
     except:
         return value
 
-def token_taxid(value):
+def token_pan(value):
+    """PAN Token"""
     return "TKN-PAN-" + fake.bothify(text="####")
 
-def hash_taxid(value):
+def hash_pan(value):
+    """Hash PAN → SHA256 (first 16 chars)"""
+    if pd.isna(value):
+        return value
     return hashlib.sha256(value.encode()).hexdigest()[:16]
 
+
 # ---------------------------------
-# Technique Mapping
+# Technique Mapping (Corrected)
 # ---------------------------------
 TECHNIQUES = {
     "masking": {
-        "credit_card": mask_card,
-        "debit_card": mask_card,
+        "card_number": mask_card,
         "bank_account": mask_account
     },
     "tokenization": {
-        "credit_card": token_card,
-        "debit_card": token_card,
+        "card_number": token_card,
         "bank_account": token_account,
-        "tax_id": token_taxid
+        "pan": token_pan
     },
     "perturbation": {
         "transaction_amount": perturb_transaction,
@@ -91,7 +96,7 @@ TECHNIQUES = {
         "salary": generalize_salary
     },
     "hashing": {
-        "tax_id": hash_taxid
+        "pan": hash_pan
     }
 }
 
@@ -101,23 +106,23 @@ TECHNIQUES = {
 def anonymize(input_csv, column, technique):
     df = pd.read_csv(input_csv)
 
-    technique = technique.lower()
     column_key = column.lower()
+    technique_key = technique.lower()
 
-    if technique not in TECHNIQUES:
-        raise ValueError("Invalid technique")
+    if technique_key not in TECHNIQUES:
+        raise ValueError(f"Invalid technique '{technique}'")
 
-    func = TECHNIQUES[technique].get(column_key, None)
+    func = TECHNIQUES[technique_key].get(column_key)
     if func is None:
-        raise ValueError(f"Technique '{technique}' not supported for column '{column_key}'")
+        raise ValueError(f"Technique '{technique}' not supported for column '{column}'")
 
-    # Replace original column
+    # Apply chosen anonymization
     df[column] = df[column].apply(func)
 
     output_file = "outputFinancial.csv"
     df.to_csv(output_file, index=False)
 
-    print(f"\nOutput saved to: {output_file}")
+    print(f"\n✔ Output saved to: {output_file}")
 
 
 # ---------------------------------
