@@ -52,7 +52,7 @@ def generalize_address(value):
     return value
 
 def suppress_address(value):
-    """Remove house number / first components"""
+    """Remove house number"""
     if pd.isna(value):
         return value
     parts = value.split()
