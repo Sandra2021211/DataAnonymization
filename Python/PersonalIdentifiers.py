@@ -14,13 +14,16 @@ fake = Faker()
 def mask_name(value):
     if pd.isna(value):
         return value
-    parts = value.split()
+
+    parts = str(value).split()
     masked_parts = []
-    for p in parts:
-        if len(p) > 1:
-            masked_parts.append(p[0] + "*" * (len(p)-1))
-        else:
+    for part in parts:
+        if len(part) <= 1:
             masked_parts.append("*")
+        elif len(part) == 2:
+            masked_parts.append(part[0] + "*")
+        else:
+            masked_parts.append(part[0] + "*" * (len(part) - 1))
     return " ".join(masked_parts)
 
 def pseudo_name(value):
@@ -122,7 +125,7 @@ TECHNIQUES = {
 # -----------------------------
 # Main Anonymization Function
 # -----------------------------
-def anonymize(input_csv, column, technique):
+def anonymize(input_csv, column, technique, output_csv=None):
     df = pd.read_csv(input_csv)
 
     technique = technique.lower()
@@ -135,12 +138,9 @@ def anonymize(input_csv, column, technique):
     if func is None:
         raise ValueError(f"Technique '{technique}' not supported for column '{column_key}'")
 
-    # -----------------------------
-    # Replace original column
-    # -----------------------------
     df[column] = df[column].apply(func)
 
-    output_file = "outputPersonal.csv"
+    output_file = output_csv or "outputPersonal.csv"
     df.to_csv(output_file, index=False)
 
     print(f"\nOutput saved to: {output_file}")
@@ -150,8 +150,9 @@ def anonymize(input_csv, column, technique):
 # CLI Execution
 # -----------------------------
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python PersonalIdentifiers.py <input_csv> <column_name> <technique>")
+    if len(sys.argv) not in (4, 5):
+        print("Usage: python PersonalIdentifiers.py <input_csv> <column_name> <technique> [output_csv]")
         sys.exit(1)
 
-    anonymize(sys.argv[1], sys.argv[2], sys.argv[3])
+    output_csv = sys.argv[4] if len(sys.argv) == 5 else None
+    anonymize(sys.argv[1], sys.argv[2], sys.argv[3], output_csv)

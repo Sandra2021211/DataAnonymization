@@ -14,7 +14,7 @@ def mask_card(value):
     """XXXX-XXXX-XXXX-last4"""
     if pd.isna(value):
         return value
-    digits = value.replace("-", "")
+    digits = str(value).replace("-", "")
     return "XXXX-XXXX-XXXX-" + digits[-4:]
 
 def token_card(value):
@@ -103,7 +103,7 @@ TECHNIQUES = {
 # ---------------------------------
 # Main Anonymization Function
 # ---------------------------------
-def anonymize(input_csv, column, technique):
+def anonymize(input_csv, column, technique, output_csv=None):
     df = pd.read_csv(input_csv)
 
     column_key = column.lower()
@@ -116,10 +116,9 @@ def anonymize(input_csv, column, technique):
     if func is None:
         raise ValueError(f"Technique '{technique}' not supported for column '{column}'")
 
-    # Apply chosen anonymization
     df[column] = df[column].apply(func)
 
-    output_file = "outputFinancial.csv"
+    output_file = output_csv or "outputFinancial.csv"
     df.to_csv(output_file, index=False)
 
     print(f"\n✔ Output saved to: {output_file}")
@@ -129,8 +128,9 @@ def anonymize(input_csv, column, technique):
 # CLI
 # ---------------------------------
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python FinancialInfo.py <input_csv> <column_name> <technique>")
+    if len(sys.argv) not in (4, 5):
+        print("Usage: python FinancialInfo.py <input_csv> <column_name> <technique> [output_csv]")
         sys.exit(1)
 
-    anonymize(sys.argv[1], sys.argv[2], sys.argv[3])
+    output_csv = sys.argv[4] if len(sys.argv) == 5 else None
+    anonymize(sys.argv[1], sys.argv[2], sys.argv[3], output_csv)
